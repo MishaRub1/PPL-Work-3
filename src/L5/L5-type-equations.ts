@@ -77,9 +77,9 @@ export const expToPool = (exp: A.Exp): Pool => {
     const findVars = (e: A.Exp, pool: Pool): Pool =>
         A.isAtomicExp(e) ? extendPool(e, pool) :
             A.isProcExp(e) ? extendPool(e, reducePool(findVars, e.body, reducePoolVarDecls(extendPoolVarDecl, e.args, pool))) :
-            A.isLitExp(e) && V.isEmptySExp(e.val) ? extendPool(e, pool) :
-            A.isLitExp(e) && V.isCompoundSExp(e.val) ?
-                extendPool(e, reducePool(findVars, [A.makeLitExp(e.val.val1), A.makeLitExp(e.val.val2)], pool)) :
+                A.isLitExp(e) && V.isEmptySExp(e.val) ? extendPool(e, pool) :
+                    A.isLitExp(e) && V.isCompoundSExp(e.val) ?
+                        extendPool(e, reducePool(findVars, [A.makeLitExp(e.val.val1), A.makeLitExp(e.val.val2)], pool)) :
                         A.isCompoundExp(e) ? extendPool(e, reducePool(findVars, A.expComponents(e), pool)) :
                             makeEmptyPool();
     return findVars(exp, makeEmptyPool());
@@ -137,10 +137,9 @@ export const makeEquationsFromExp = (exp: A.Exp, pool: Pool): Opt.Optional<Equat
             Opt.mapv(Opt.bind(safeLast(exp.body), (last: A.CExp) => inPool(pool, last)), (ret: T.TExp) =>
                 [makeEquation(left, T.makeProcTExp(R.map((vd) => vd.texp, exp.args), ret))])) :
             A.isLitExp(exp) ?
-                (V.isEmptySExp(exp.val) ?
-                    Opt.makeNone() : // HW3 3.3.b - fix this branch
-                    V.isCompoundSExp(exp.val) ?
-                        Opt.makeNone() : // HW3 3.3.b - fix this branch
+                (V.isEmptySExp(exp.val) ? Opt.mapv(inPool(pool, exp), (left: T.TExp) =>
+                    [makeEquation(left, T.makeListTExp(T.makeFreshTVar()))]) :
+                    V.isCompoundSExp(exp.val) ? makeListLitEquations(exp, exp.val, pool) :
                         isNumber(exp.val) ? Opt.mapv(inPool(pool, exp), (left: T.TExp) =>
                             [makeEquation(left, T.makeNumTExp())]) :
                             isBoolean(exp.val) ? Opt.mapv(inPool(pool, exp), (left: T.TExp) =>
@@ -162,7 +161,14 @@ export const makeEquationsFromExp = (exp: A.Exp, pool: Pool): Opt.Optional<Equat
                                 // Todo: define, let, letrec, set 
                                 Opt.makeNone();
 
-
+// Equations for a non-empty list literal '(<head> . <tail>):
+//   T_list = (list T_head)  and  T_tail = (list T_head)
+const makeListLitEquations = (exp: A.LitExp, pair: V.CompoundSExp, pool: Pool): Opt.Optional<Equation[]> =>
+    Opt.bind(inPool(pool, exp), (left: T.TExp) =>
+        Opt.bind(inPool(pool, A.makeLitExp(pair.val1)), (head: T.TExp) =>
+            Opt.mapv(inPool(pool, A.makeLitExp(pair.val2)), (tail: T.TExp) =>
+                [makeEquation(left, T.makeListTExp(head)),
+                makeEquation(tail, T.makeListTExp(head))])));
 // ========================================================
 // Signature: inferType(exp)
 // Purpose: Infer the type of an expression using the equations method
