@@ -84,7 +84,12 @@ const typeofStr = (s: StrExp): StrTExp => makeStrTExp();
 const numOpTExp = parseTE('(number * number -> number)');
 const numCompTExp = parseTE('(number * number -> boolean)');
 const boolOpTExp = parseTE('(boolean * boolean -> boolean)');
-
+// cons : (T * (list T) -> (list T))
+const consTExp = (t: TExp): TExp => makeProcTExp([t, makeListTExp(t)], makeListTExp(t));
+// car : ((list T) -> T)
+const carTExp = (t: TExp): TExp => makeProcTExp([makeListTExp(t)], t);
+// cdr : ((list T) -> (list T))
+const cdrTExp = (t: TExp): TExp => makeProcTExp([makeListTExp(t)], makeListTExp(t));
 export const typeofPrim = (p: PrimOp): Result<TExp> =>
     (p.op === '+') ? numOpTExp :
         (p.op === '-') ? numOpTExp :
@@ -107,13 +112,10 @@ export const typeofPrim = (p: PrimOp): Result<TExp> =>
                                                                         (p.op === 'string=?') ? makeOk(makeProcTExp([makeStrTExp(), makeStrTExp()], makeBoolTExp())) :
                                                                             (p.op === 'display') ? makeOk(makeProcTExp([T()], makeVoidTExp())) :
                                                                                 (p.op === 'newline') ? makeOk(makeProcTExp([], makeVoidTExp())) :
-                                                                                    (p.op === 'cons') ?
-                                                                                        makeFailure("HW3 3.1 - Implement this branch") :
-                                                                                        (p.op === 'car') ?
-                                                                                            makeFailure("HW3 3.1 - Implement this branch") :
-                                                                                            (p.op === 'cdr') ?
-                                                                                                makeFailure("HW3 3.1 - Implement this branch") :
-                                                                                                makeFailure(`Primitive not yet implemented: ${p.op}`);
+                                                                                        (p.op === 'cons') ? makeOk(consTExp(T())) :
+                                                                                            (p.op === 'car') ? makeOk(carTExp(T())) :
+                                                                                                (p.op === 'cdr') ? makeOk(cdrTExp(T())) :
+                                                                                                    makeFailure(`Primitive not yet implemented: ${p.op}`);
 
 // Purpose: compute the type of an if-exp
 // Typing rule:
