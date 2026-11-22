@@ -237,4 +237,20 @@ const typeofDefineVar = (exp: DefineExp, tenv: TEnv): Result<TExp> =>
 // for the expressions that follow it; the program type is the type of the
 // last expression.
 export const typeofProgram = (exp: Program, tenv: TEnv): Result<TExp> =>
-    makeFailure("HW3 2.2 - Implement this function");
+    typeofProgramExps(exp.exps, tenv);
+
+// Purpose: compute the type of a sequence of top-level expressions.
+// A define extends the TEnv for the expressions after it.
+const typeofProgramExps = (exps: List<Exp>, tenv: TEnv): Result<TExp> =>
+    isNonEmptyList<Exp>(exps) ? typeofFirstExp(first(exps), rest(exps), tenv) :
+        makeFailure(`Unexpected empty program`);
+
+// Purpose: compute the type of the first expression, then continue with the rest.
+const typeofFirstExp = (exp: Exp, restExps: List<Exp>, tenv: TEnv): Result<TExp> =>
+    isDefineExp(exp) ?
+        bind(typeofDefineVar(exp, tenv), (varTE: TExp) =>
+            isEmpty(restExps) ? makeOk(makeVoidTExp()) :
+                typeofProgramExps(restExps, makeExtendTEnv([exp.var.var], [varTE], tenv))) :
+        bind(typeofExp(exp, tenv), (expTE: TExp) =>
+            isEmpty(restExps) ? makeOk(expTE) :
+                typeofProgramExps(restExps, tenv));
