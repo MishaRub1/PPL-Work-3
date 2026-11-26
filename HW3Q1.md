@@ -123,7 +123,9 @@ Tf1 = [Tx1 * Tx1 -> T3]
 ((lambda (f1) (lambda (x1) ((f1 x1) x1))) (lambda (y1) y1))
 ```
 
-**Answer (handwritten):** in the image above, see also `Part1.pdf` / `images/HW3Q1.2b.png`.
+**Answer (handwritten):** see also `Part1.pdf` / `images/HW3Q1.2b.png`.
+
+![Question 1.2 expressions 2 and 3 handwritten answers](images/HW3Q1.2b.png)
 
 **Answer (typed):**
 
